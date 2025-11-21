@@ -1,4 +1,4 @@
-# 
+#
 
 ## 1. Charset Normaliser
 
@@ -133,3 +133,68 @@ https://docs.scipy.org/doc/scipy/tutorial/thread_safety.html
 
 https://docs.scipy.org/doc/scipy/tutorial/parallel_execution.html
 -> Blas/lapack already multi-threaded
+
+# Sklearn
+
+Summary of Threading Documentation in scikit-learn
+
+  1. General Parallelism Documentation (doc/computing/parallelism.rst)
+
+  This is the main documentation for threading and parallelism, covering three types of parallelism:
+
+  - Higher-level parallelism with joblib: Controls via n_jobs parameter, supports both multi-processing (default loky backend) and multi-threading backends
+  - Lower-level parallelism with OpenMP: For Cython/C code, controlled by OMP_NUM_THREADS environment variable
+  - BLAS/LAPACK parallelism: For NumPy/SciPy operations, controlled by library-specific environment variables (MKL_NUM_THREADS, OPENBLAS_NUM_THREADS, BLIS_NUM_THREADS)
+
+  Key concepts covered:
+  - Oversubscription prevention (spawning too many threads)
+  - How joblib automatically manages thread counts to avoid conflicts
+  - Environment variable controls
+
+  2. Free-Threading Python Support
+
+  Current Status (v1.6):
+  - Location: doc/whats_new/v1.6.rst:285-299
+  - Preliminary support for free-threaded CPython 3.13
+  - Free-threaded wheels available for all supported platforms
+  - Free-threaded (nogil) CPython 3.13 is experimental, aims to remove the Global Interpreter Lock (GIL)
+  - Users encouraged to try and report issues
+
+  Upcoming Changes (v1.7+):
+  - Location: doc/whats_new/upcoming_changes/custom-top-level/custom-top-level-32079.other.rst
+  - Full support for free-threaded CPython 3.14 (recommended over 3.13)
+  - Python 3.14 fixes several issues compared to 3.13
+  - References to external documentation: https://py-free-threading.github.io
+
+  3. FAQ Section (doc/faq.rst)
+
+  Two threading-related questions:
+  - Line 507-556: "Why do I sometimes get a crash/freeze with n_jobs > 1 under OSX or Linux?" - Explains fork-safety issues with thread pools
+  - Line 558-573: "Why does my job use more cores than specified with n_jobs?" - Explains interaction between joblib, OpenMP, and BLAS threading
+
+  4. Computational Performance (doc/computing/computational_performance.rst:248-254)
+
+  Briefly mentions the GIL (Global Interpreter Lock) when discussing throughput and spawning additional processes to increase prediction throughput.
+
+  5. Build System Integration
+
+  - Meson build (sklearn/meson.build:196): Cython compiled with -Xfreethreading_compatible=True flag
+  - CI/CD: Azure pipelines and GitHub workflows configured to test free-threaded builds
+  - Environment files: build_tools/azure/pylatest_free_threaded_environment.yml defines conda environment with python-freethreading
+  - Commit tags: [free-threaded] tag available for CI builds (doc/developers/contributing.rst:497)
+
+  6. Implementation Details
+
+  Code comments mention free-threading considerations:
+  - sklearn/utils/parallel.py:73 - Warning filters in free-threading Python 3.14+
+  - sklearn/utils/_metadata_requests.py:1497 - Copy operations needed for free-threaded context
+  - sklearn/utils/tests/test_parallel.py:138,161 - Test adjustments for free-threading
+
+  Key External References
+
+  All free-threading documentation points users to:
+  - https://py-free-threading.github.io - Main documentation
+  - Installation guide
+  - Ecosystem compatibility tracking
+
+  The documentation is well-integrated across release notes, FAQ, main parallelism docs, and includes both user-facing information and developer/CI infrastructure support.
